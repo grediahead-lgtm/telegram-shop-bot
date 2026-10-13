@@ -1,0 +1,31 @@
+{
+  "currency": "UAH",
+  "owner_chat_id": null,
+  "catalog": [
+    {"name": "Beds", "products": [
+      {"id": "b1", "name": "Bed Comfort 40x30", "price": 1250},
+      {"id": "b2", "name": "Bed Comfort 50x40", "price": 1490}]},
+    {"name": "Carriers", "products": [
+      {"id": "c1", "name": "Carrier Geo 26x30x16", "price": 2340.5}]}
+  ],
+  "texts": {
+    "greeting": "Hello! /catalog shows products, /add ID [qty] puts one in the cart, /cart shows it, /checkout orders, /clear empties the cart.",
+    "how_add": "Add to the cart: /add b1 2",
+    "unknown_product": "No such product ID. See /catalog.",
+    "bad_qty": "Quantity must be from 1 to {n}.",
+    "cart_full": "The cart is full. Send /checkout or /remove ID.",
+    "added": "Added: {name}, now {qty} pcs.",
+    "removed": "Removed.",
+    "not_in_cart": "This product is not in your cart.",
+    "cart_empty": "Your cart is empty. See /catalog.",
+    "cart_cleared": "Cart cleared.",
+    "total": "Total: {total} {currency}",
+    "ask_phone": "Your phone number for confirmation?",
+    "bad_phone": "Please send a phone number (9 to 15 digits).",
+    "ask_comment": "Comment for the order (delivery address, size...)? Write '-' if none.",
+    "confirm": "Send 'yes' to place the order, or /cancel.",
+    "ordered": "Thank you! Order {order_id} is accepted. The manager will contact you. Payment is arranged with the manager.",
+    "save_failed": "Sorry, the order could not be saved. Please send 'yes' again in a minute.",
+    "stopped": "Stopped. Your cart is kept."
+  }
+}

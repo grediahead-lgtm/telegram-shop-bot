@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.venv/
+out/
+orders.csv
+config.json
