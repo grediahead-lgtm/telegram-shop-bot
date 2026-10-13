@@ -21,7 +21,7 @@ Tests: `python3 -m unittest discover -s tests` (no internet, no real token).
 ## Limits (read this)
 - **No payments, no stock levels, no delivery calculation, no product photos.** It takes orders; a person confirms them. Prices live in the config: when a price changes, edit the config and restart.
 - Carts and dialogs are in memory (a restart empties them); saved orders are in the CSV.
-- Order IDs restart from 1 after a restart within the same day, so use `created_at` together with the ID if you restart often.
+- Order numbers continue after a restart (the day's last number is read from `orders.csv`); if you delete or move the CSV, numbering starts again from 1.
 - The Telegram calls are covered by tests with the conversation logic only, not by a test against Telegram itself.
 
 MIT license.
@@ -34,4 +34,4 @@ MIT license.
 
 **Запуск:** `cp examples/config.example.json config.json`, `--check`, потім із `TELEGRAM_BOT_TOKEN`. Каталог і всі тексти — в одному JSON.
 
-**Важливо:** без оплат, залишків, доставки й фото; кошики зберігаються в пам'яті; номери замовлень після перезапуску в той самий день починаються знову з 1.
+**Важливо:** без оплат, залишків, доставки й фото; кошики зберігаються в пам'яті; номери замовлень продовжуються після перезапуску за файлом `orders.csv`.

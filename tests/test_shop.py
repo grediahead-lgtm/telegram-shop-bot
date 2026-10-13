@@ -32,10 +32,10 @@ class CartTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             b = bot(d)
             say(b, 1, "/add b1 2", "/add c1")
-            self.assertEqual(b.total(1), 2 * 1250 + 2340.5)
+            self.assertEqual(float(b.total(1)), 2 * 1250 + 2340.5)
             self.assertIn("Total: 4840.5 UAH", b.handle(1, USER, "/cart")[0])
             say(b, 1, "/remove b1")
-            self.assertEqual(b.total(1), 2340.5)
+            self.assertEqual(float(b.total(1)), 2340.5)
 
     def test_validation(self):
         with tempfile.TemporaryDirectory() as d:
@@ -110,6 +110,28 @@ class CheckoutTests(unittest.TestCase):
             say(b, 1, "/add b1", "/checkout", "380501112233", "=SUM(A1)", "yes")
             with open(os.path.join(d, "o.csv"), encoding="utf-8") as f:
                 self.assertTrue(list(csv.DictReader(f))[0]["comment"].startswith("'="))
+
+    def test_order_numbers_continue_after_a_restart(self):
+        with tempfile.TemporaryDirectory() as d:
+            b1 = bot(d)
+            say(b1, 1, "/add b1", "/checkout", "380501112233", "-", "yes")
+            b2 = bot(d)  # same CSV, new process
+            out = say(b2, 2, "/add b1", "/checkout", "380501112244", "-", "yes")
+            self.assertIn("20261013-0002", out[-1])
+
+    def test_failed_owner_notification_keeps_the_confirmation(self):
+        with tempfile.TemporaryDirectory() as d:
+            def boom(o):
+                raise RuntimeError("telegram down")
+            b = bot(d, notify_owner=boom)
+            out = say(b, 1, "/add b1", "/checkout", "380501112233", "-", "yes")
+            self.assertIn("accepted", out[-1])
+
+    def test_totals_use_exact_decimals(self):
+        with tempfile.TemporaryDirectory() as d:
+            b = ShopBot(dict(CFG, catalog=[{"name": "x", "products": [{"id": "p", "name": "P", "price": 0.1}]}]), os.path.join(d, "o.csv"))
+            say(b, 1, "/add p 3")
+            self.assertEqual(money(b.total(1)), "0.3")
 
     def test_rate_limit(self):
         with tempfile.TemporaryDirectory() as d:

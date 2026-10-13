@@ -2,6 +2,7 @@
 import csv
 import datetime as dt
 import os
+from decimal import Decimal
 import re
 import time
 
@@ -14,15 +15,27 @@ def clean(s, n=200):
 
 
 def money(x):
-    return ("%.2f" % x).rstrip("0").rstrip(".")
+    return ("%.2f" % Decimal(str(x))).rstrip("0").rstrip(".")
 
 
 class ShopBot:
     def __init__(self, cfg, orders_csv, notify_owner=None, now=dt.datetime.now, rate_limit=30):
         self.cfg, self.csv_path, self.notify_owner, self.now = cfg, orders_csv, notify_owner, now
-        self.carts, self.state, self.counter = {}, {}, 0
+        self.carts, self.state = {}, {}
+        self.counter = self._last_counter_today()
         self.products = {str(p["id"]): p for c in cfg["catalog"] for p in c["products"]}
         self.rate_limit, self._hits = rate_limit, {}
+
+    def _last_counter_today(self):
+        """Continue today's order numbers after a restart, so two orders never share an ID."""
+        prefix, last = self.now().strftime("%Y%m%d") + "-", 0
+        if os.path.exists(self.csv_path):
+            with open(self.csv_path, encoding="utf-8", newline="") as f:
+                for row in csv.DictReader(f):
+                    oid = row.get("order_id") or ""
+                    if oid.startswith(prefix) and oid[len(prefix):].isdigit():
+                        last = max(last, int(oid[len(prefix):]))
+        return last
 
     def _limited(self, chat):
         t = time.monotonic()
@@ -91,13 +104,13 @@ class ShopBot:
         return self.cfg["texts"]["removed"]
 
     def total(self, chat):
-        return sum(self.products[i]["price"] * q for i, q in self.carts.get(chat, {}).items())
+        return sum((Decimal(str(self.products[i]["price"])) * q for i, q in self.carts.get(chat, {}).items()), Decimal("0"))
 
     def cart_text(self, chat):
         cart = self.carts.get(chat)
         if not cart:
             return self.cfg["texts"]["cart_empty"]
-        lines = ["%s x%d = %s" % (self.products[i]["name"], q, money(self.products[i]["price"] * q)) for i, q in cart.items()]
+        lines = ["%s x%d = %s" % (self.products[i]["name"], q, money(Decimal(str(self.products[i]["price"])) * q)) for i, q in cart.items()]
         return "\n".join(lines) + "\n" + self.cfg["texts"]["total"].format(total=money(self.total(chat)), currency=self.cfg["currency"])
 
     # ---- checkout ----
@@ -138,7 +151,10 @@ class ShopBot:
         self.carts.pop(chat, None)
         self.state.pop(chat, None)
         if self.notify_owner:
-            self.notify_owner(order)
+            try:
+                self.notify_owner(order)
+            except Exception:  # the order is saved; an owner-message failure must not hide the confirmation
+                pass
         return [T["ordered"].format(order_id=order["order_id"])]
 
     def save(self, order):
