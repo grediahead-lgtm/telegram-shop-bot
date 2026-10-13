@@ -69,12 +69,12 @@ class CheckoutTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             seen = []
             b = bot(d, notify_owner=seen.append)
-            out = say(b, 1, "/add b1 2", "/checkout", "+380501112233", "Kyiv, Novapost 5", "yes")
+            out = say(b, 1, "/add b1 2", "/checkout", "+380000000001", "Kyiv, Novapost 5", "yes")
             self.assertIn("Order 20261013-0001", out[-1])
             with open(os.path.join(d, "o.csv"), encoding="utf-8") as f:
                 row = list(csv.DictReader(f))[0]
             self.assertEqual((row["items"], row["total"], row["comment"]), ("Bed Comfort 40x30 x2", "2500", "Kyiv, Novapost 5"))
-            self.assertEqual(seen[0]["phone"], "+380501112233")
+            self.assertEqual(seen[0]["phone"], "+380000000001")
             self.assertEqual(b.carts.get(1), None)
 
     def test_empty_cart_cannot_checkout(self):
@@ -86,7 +86,7 @@ class CheckoutTests(unittest.TestCase):
             b = bot(d)
             say(b, 1, "/add b1", "/checkout")
             self.assertEqual(say(b, 1, "123")[0], CFG["texts"]["bad_phone"])
-            say(b, 1, "380501112233", "-")
+            say(b, 1, "380000000001", "-")
             self.assertEqual(say(b, 1, "maybe")[0], CFG["texts"]["confirm"])
             self.assertFalse(os.path.exists(os.path.join(d, "o.csv")))
 
@@ -100,23 +100,23 @@ class CheckoutTests(unittest.TestCase):
     def test_save_failure_keeps_the_cart(self):
         with tempfile.TemporaryDirectory() as d:
             b = ShopBot(CFG, os.path.join(d, "missing-dir", "o.csv"))
-            out = say(b, 1, "/add b1", "/checkout", "380501112233", "-", "yes")
+            out = say(b, 1, "/add b1", "/checkout", "380000000001", "-", "yes")
             self.assertEqual(out[-1], CFG["texts"]["save_failed"])
             self.assertEqual(b.carts[1], {"b1": 1})
 
     def test_formula_guard(self):
         with tempfile.TemporaryDirectory() as d:
             b = bot(d)
-            say(b, 1, "/add b1", "/checkout", "380501112233", "=SUM(A1)", "yes")
+            say(b, 1, "/add b1", "/checkout", "380000000001", "=SUM(A1)", "yes")
             with open(os.path.join(d, "o.csv"), encoding="utf-8") as f:
                 self.assertTrue(list(csv.DictReader(f))[0]["comment"].startswith("'="))
 
     def test_order_numbers_continue_after_a_restart(self):
         with tempfile.TemporaryDirectory() as d:
             b1 = bot(d)
-            say(b1, 1, "/add b1", "/checkout", "380501112233", "-", "yes")
+            say(b1, 1, "/add b1", "/checkout", "380000000001", "-", "yes")
             b2 = bot(d)  # same CSV, new process
-            out = say(b2, 2, "/add b1", "/checkout", "380501112244", "-", "yes")
+            out = say(b2, 2, "/add b1", "/checkout", "380000000002", "-", "yes")
             self.assertIn("20261013-0002", out[-1])
 
     def test_failed_owner_notification_keeps_the_confirmation(self):
@@ -124,7 +124,7 @@ class CheckoutTests(unittest.TestCase):
             def boom(o):
                 raise RuntimeError("telegram down")
             b = bot(d, notify_owner=boom)
-            out = say(b, 1, "/add b1", "/checkout", "380501112233", "-", "yes")
+            out = say(b, 1, "/add b1", "/checkout", "380000000001", "-", "yes")
             self.assertIn("accepted", out[-1])
 
     def test_totals_use_exact_decimals(self):
